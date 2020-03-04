@@ -1,0 +1,129 @@
+---
+title: "Homework 4"
+author: "Anyesha Ray"
+date: "February 26, 2020"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+data(ChickWeight, package="datasets")
+#?ChickWeight
+library("ggplot2")
+library("dplyr")
+library("datasets")
+```
+
+
+##Get a frequency breakdown of the number of chicks, their average weight and the standard deviation of the weights in each of the diets at the start of the study. Store the resulting data frame in a variable named weight0 and print.
+```{r}
+q1 <- ChickWeight %>% filter(Time == 0)
+weight0 <- ChickWeight %>% group_by(Diet) %>% summarize(num_chicks = n(), avg_weight= mean(weight), sd_weight= sd(weight))
+weight0
+```
+
+
+## Each chick should have twelve weight measurements. Use the dplyr package to identify how many measurements are there for each chick. Extract a subset of the data for all chicks with complete information, name the data set complete, and print the first 3 rows. 
+
+```{r}
+complete <- ChickWeight %>% group_by(Chick) %>% mutate(count = n()) %>% filter(count == 12)
+complete[1:3,]
+```
+
+
+## In the complete data set introduce a new variable that measures the current weight difference compared to day 0. Name this variable weightgain and print the first 3 rows of the new data frame.
+```{r}
+weight_gain_1 <- complete %>% group_by(Chick) %>% filter(Time == 0)
+complete$initial_weight <- rep(weight_gain_1$weight, each=12)
+complete <- complete %>% mutate(weightgain = weight - initial_weight)
+complete[1:3,]
+```
+
+
+## Use {ggplot2} to create side-by-side boxplots of weightgain by Diet for day 21. Change the order of the categories in the Diet variable such that the boxplots are ordered by median weightgain, and the lower limit of the y axis should be 0. Describe the relationship in 2-3 sentences.
+```{r}
+
+complete$Diet <- factor(complete$Diet, levels(complete$Diet)[c(1,2,4,3)])
+complete %>% filter(Time == 21) %>% ggplot(aes(x= Diet, y= weightgain)) + geom_boxplot() + expand_limits(y=0) + labs(y = 'weight gain', title = 'Side-by-Side Boxplots of Weightgain by Diet for Day 21')
+
+```
+
+
+It seems as though Diet 1 has the lowest median weight gain. However, all of the boxplots overlap if you disregard the min and max, which means there is not a  huge difference when looking at the medians. Based on the 5 summary statistics, generally, it seems like diet 1 has the lowest wight gain and diet 3 has the highest weight gain. 
+
+
+
+##Answer each of the following questions using numerical and graphical summary. Also explain what you found: (a) Which chick gained the most weight and which gained the least weight? (b) What diets were they on?
+
+```{r}
+num5 <- complete %>% filter(Time == 21)
+maxweight <- max(num5$weightgain)
+minweight <- min(num5$weightgain)
+num5 %>% filter(weightgain == maxweight | weightgain == minweight)
+
+
+num5 %>% ggplot(aes(x=Chick, y=weightgain)) + geom_point() + labs(y='weight gain (grams)', title='Chick vs Weight Gain')
+
+```
+```
+
+Chick 24 gained the least weight (32 grams) on diet 2 and Chick 35 gained the most weight (332 grams) on diet 3. 
+
+
+##For the chicks with the least and the most weight at time 0, plot their growth trajectories over time.
+
+```{r}
+min <- min(complete$initial_weight)
+max <- max(complete$initial_weight)
+complete %>% filter(Time == 0 & (initial_weight==min | initial_weight == max))
+
+
+complete %>%filter(Chick == 3 | Chick == 11 | Chick == 19 | Chick == 23 | Chick == 27 | Chick == 28 | Chick == 29 | Chick == 33 | Chick == 36 | Chick == 48)  %>% ggplot(aes(x=Time,y=weight)) + geom_point() + facet_grid(cols = vars(Chick)) + labs(title='Growth Trajectories for Chicks with least and Most Weight at Time 0')
+
+```
+
+
+
+##Add to the previous plot the average growth trajectory for all chicks (calculated as the mean weight for each chick at each time). How do the trajectories compare?
+
+```{r}
+avgtraj <- complete %>% group_by(Time) %>% summarize(avgw = mean(weight))
+avgtraj %>% ggplot(aes(x=Time,y=avgw)) + geom_point() + labs(y='Average Chick Weight', x='Time ',title='Average Growth Trajectory for All Chicks')
+
+```
+
+The average trajectory for all chicks does not decreases at any point. However for the individual chicks the graphs often decreased at a certain point. 
+
+
+
+##What else do you find interesting in the dataset? Show your exploratory analysis.
+
+```{r}
+scatter= plot(ChickWeight$weight, ChickWeight$Time)
+scatter2= plot(ChickWeight$weight, ChickWeight$Diet)
+
+complete %>% ggplot(aes(x=Time, y=weightgain)) + geom_point(aes(color=Chick)) + geom_line(aes(color=Chick)) + labs(y='weight gain (grams)', title='Chick vs Weight Gain')
+
+```
+
+One thing I thought was interesting to look at was the weight gain for all the chicks over time. We did a graphical summary for Day 21 but not for over time. It is interesting to see that there is a very clear distinction between which chicks didn't have much growth and which ones did compared to the other chicks. 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
